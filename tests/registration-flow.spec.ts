@@ -20,6 +20,16 @@ test.describe('Registration flow', () => {
     const loginButtonEl = page.locator('.rs-modal-body > button.my-4.rs-btn.rs-btn-primary.rs-btn-block');
     expect(loginButtonEl).toBeEnabled();
     await loginButtonEl.click();
-    await page.locator('[autocomplete="one-time-code"]').isVisible();
+    //Type opt
+    const otpFields = page.locator('[autocomplete="one-time-code"]');
+    await expect(otpFields.first()).toBeVisible();
+    
+    const otpDigits = ['1', '2', '3', '4'];
+    for (let i = 0; i < 4; i++) {
+      await otpFields.nth(i).fill(otpDigits[i]);
+    }
+    const verifyButton = page.locator('div > div.text-center.rs-modal-body > button');
+    expect(verifyButton).toBeEnabled();
+    await verifyButton.click();
   });
 });
