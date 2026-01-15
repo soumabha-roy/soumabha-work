@@ -11,11 +11,15 @@ test.describe('Registration flow', () => {
     await expect(page.locator(selectors.logo)).toBeVisible();
   });
 
-  test('Click on the Login button', async ({ page }) => {
+  test('Registration process', async ({ page }) => {
     const loginButton = page.locator(selectors.loginButton);
-    await expect(loginButton).toBeVisible();
-    await page.waitForTimeout(2000);
     await loginButton.click();
-    await page.waitForTimeout(2000);
+    const phoneNumberField = await page.locator(selectors.phoneField);
+    await expect(phoneNumberField).toBeVisible();
+    await page.locator(selectors.phoneField).fill('1234567890');
+    const loginButtonEl = page.locator('.rs-modal-body > button.my-4.rs-btn.rs-btn-primary.rs-btn-block');
+    expect(loginButtonEl).toBeEnabled();
+    await loginButtonEl.click();
+    await page.locator('[autocomplete="one-time-code"]').isVisible();
   });
 });
