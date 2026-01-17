@@ -1,57 +1,85 @@
-import { test, expect } from '@playwright/test';
-import { selectors } from './lib/selectors';
+import { test, expect, Page, Browser, BrowserContext } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 
 test.describe('Registration flow', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'load' });
+  let browser: Browser;
+  let context: BrowserContext;
+  let pageSession: Page;
+
+  test.beforeAll(async ({ browserName }) => {
+    const { chromium, firefox, webkit } = require('@playwright/test');
+    browser = await (browserName === 'chromium' ? chromium : browserName === 'firefox' ? firefox : webkit).launch();
+    context = await browser.newContext();
+    pageSession = await context.newPage();
   });
 
-  test('Go to the playzhub page', async ({ page }) => {
+  test.afterAll(async () => {
+    await context.close();
+    await browser.close();
+  });
+
+  test('Registration process', async () => {
+    await pageSession.goto('/', { waitUntil: 'load' });
     // Expect logo to be visible
-    await expect(page.locator(selectors.logo)).toBeVisible();
-  });
+    await expect(pageSession.locator('[class="logo"]')).toBeVisible();
 
-  test('Registration process', async ({ page }) => {
-    const loginButton = page.locator(selectors.loginButton);
+    // Fill the phone number in the login modal 
+    const loginButton = pageSession.locator('.login_sec');
     await loginButton.click();
-    const phoneNumberField = await page.locator(selectors.phoneField);
+    const phoneNumberField = await pageSession.locator('.phone input');
     await expect(phoneNumberField).toBeVisible();
-    await page.locator(selectors.phoneField).fill(faker.string.numeric(10));
-    const loginButtonEl = page.locator(selectors.login);
+    await pageSession.locator('.phone input').fill(faker.string.numeric(10));
+
+    // Once Phone number valid Login button will be enabled and can continue 
+    const loginButtonEl = pageSession.locator('.rs-modal-body > button.my-4.rs-btn.rs-btn-primary.rs-btn-block');
     expect(loginButtonEl).toBeEnabled();
     await loginButtonEl.click();
+    
     //Type opt
-    const otpFields = page.locator(selectors.opt);
+    const otpFields = pageSession.locator('[autocomplete="one-time-code"]');
     await expect(otpFields.first()).toBeVisible();
     
     const otpDigits = ['1', '2', '3', '4'];
     for (let i = 0; i < 4; i++) {
       await otpFields.nth(i).fill(otpDigits[i]);
     }
-    const verifyButton = page.locator('.text-center.rs-modal-body button');
+
+    const verifyButton = pageSession.locator('button.rs-btn-primary', { hasText: 'Verify' });
     expect(verifyButton).toBeEnabled();
     await verifyButton.click();
-    await page.waitForTimeout(2000);
+    await pageSession.waitForTimeout(2000);
 
-    //Update profile
-    //Select DOB
-    const dobField = page.locator('div:nth-child(3) > span');
-    expect(dobField).toBeVisible();
-    await dobField.click();
-    const calender = page.locator('.w-100 .editField')
-    await calender.click();
-    // const confirm = page.locator('div.text-center.confirm > button');
-    // await confirm.click();
-    // await page.waitForTimeout(1000);
-    // Select from dropdown option
-    // const dropdownButton = page.locator('.editField');
-    // await dropdownButton.last().click()
-    // const dropdown = page.locator('.custom-select-dropdown');
-    // await expect(dropdown).toBeVisible();
-    // await dropdown.click();
-    // const dropdownOption = page.locator('.custom-select-dropdown li');
-    // await dropdownOption.first().click();
+    await pageSession.locator('[placeholder="Not Specified"] + span').click();
+    const datePickerModal = pageSession.locator('[role="dialog"]:has-text("Update Birthday")');
+    await expect(datePickerModal).toBeVisible();
     
+    const dateInput = pageSession.locator('.rs-picker input.rs-input');
+    await expect(dateInput).toBeVisible();
+    await dateInput.click();
+    
+    const calendarPopup = pageSession.locator('[data-testid="picker-popup"]');
+    await expect(calendarPopup).toBeVisible();
+    
+    const dateCell = pageSession.locator('[role="gridcell"][aria-label*="15 Jan 2013"]:not([aria-disabled="true"])');
+    await expect(dateCell).toBeVisible();
+    await dateCell.click();
+    
+    const confirmButton = pageSession.locator('.confirm button:has-text("Confirm")');
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
+    await expect(datePickerModal).not.toBeVisible();
+    
+    const agreeCheckbox = pageSession.locator('input#\\31 \\33 \\+'); 
+    await expect(agreeCheckbox).toBeVisible();
+    await agreeCheckbox.check();
+    
+    const saveButton = pageSession.getByRole('button', { name: 'Save & Continue' });
+    await expect(saveButton).toBeEnabled();
+    await saveButton.click();
+    await pageSession.waitForTimeout(2000);
+    const skipRefferal = pageSession.locator('button.guest-btn.rs-btn.rs-btn-default.rs-btn-block');
+    await skipRefferal.click();
+    await pageSession.waitForTimeout(2000);
   });
+
 });
