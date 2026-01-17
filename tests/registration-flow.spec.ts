@@ -80,6 +80,12 @@ test.describe('Registration flow', () => {
     const skipRefferal = pageSession.locator('button.guest-btn.rs-btn.rs-btn-default.rs-btn-block');
     await skipRefferal.click();
     await pageSession.waitForTimeout(2000);
+    const continueButton = pageSession.locator('div.rs-modal-body div:nth-child(3) > button');
+    await continueButton.click();
+    await pageSession.waitForTimeout(2000);
+    const earnButton = pageSession.locator('div.rs-modal-body div.text-center.mt-4.re_btn > button');
+    await earnButton.click();
+    await pageSession.waitForTimeout(3000);
   });
 
 });
