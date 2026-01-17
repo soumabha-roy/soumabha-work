@@ -20,22 +20,18 @@ test.describe('Registration flow', () => {
 
   test('Registration process', async () => {
     await pageSession.goto('/', { waitUntil: 'load' });
-    // Expect logo to be visible
     await expect(pageSession.locator('[class="logo"]')).toBeVisible();
 
-    // Fill the phone number in the login modal 
     const loginButton = pageSession.locator('.login_sec');
     await loginButton.click();
     const phoneNumberField = await pageSession.locator('.phone input');
     await expect(phoneNumberField).toBeVisible();
     await pageSession.locator('.phone input').fill(faker.string.numeric(10));
 
-    // Once Phone number valid Login button will be enabled and can continue 
     const loginButtonEl = pageSession.locator('.rs-modal-body > button.my-4.rs-btn.rs-btn-primary.rs-btn-block');
     expect(loginButtonEl).toBeEnabled();
     await loginButtonEl.click();
     
-    //Type opt
     const otpFields = pageSession.locator('[autocomplete="one-time-code"]');
     await expect(otpFields.first()).toBeVisible();
     
